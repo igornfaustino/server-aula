@@ -1,77 +1,49 @@
 const express = require("express");
+const { saveProduct, getAllProducts, getProductById, updateProduct, deleteProduct } = require("../database/products");
 const router = express.Router();
 
-let products = [
-    {
-        id: 1,
-        name: "ps4",
-        price: 2500
-    },
-    {
-        id: 2,
-        name: "Nintendo switch",
-        price: 2300
-    },
-    {
-        id: 3,
-        name: "xbox",
-        price: 2500
-    }
-]
-
-router.get("/products", (req, res) => {
-    // http://localhost:8080/products?more_than=2500
+router.get("/products", async (req, res) => {
     const moreThan = req.query.more_than ? Number(req.query.more_than) : 0;
+    const products = await getAllProducts(moreThan);
     res.json({
-        products: products
-            .filter((product) => {
-                return moreThan < product.price
-        })
+        products
     })
 })
 
-router.get("/products/:id", (req, res) => {
+router.get("/products/:id", async (req, res) => {
     const id = Number(req.params.id);
-    const product = products.find((product) => {
-        return product.id === id;
-    });
+    const product = await getProductById(id)
     res.json({
         product
     })
 })
 
-router.post("/products", (req, res) => {
+router.post("/products", async (req, res) => {
     const newProduct = {
-        id: products.length + 1,
         name: req.body.name,
         price: req.body.price
     }
-    products.push(newProduct)
+    const savedProduct = await saveProduct(newProduct)
     res.json({
-        product: newProduct
+        product: savedProduct
     })
 })
 
-router.put("/products/:id", (req, res) => {
+router.put("/products/:id", async (req, res) => {
     const id = Number(req.params.id);
-    const product = products.find((product) => {
-        return product.id === id;
-    })
-    if (!product) {
-        return res.status(404).json({message: "Product not found"});
+    const product = {
+        name: req.body.name,
+        price: req.body.price
     }
-    product.name = req.body.name;
-    product.price = req.body.price;
+    const updatedProduct = await updateProduct(id, product);
     res.json({
-        product
+        product: updatedProduct
     })
 })
 
-router.delete("/products/:id", (req, res) => {
+router.delete("/products/:id", async (req, res) => {
     const id = Number(req.params.id);
-    products = products.filter((product) => {
-        return product.id !== id;
-    })
+    await deleteProduct(id);
     res.status(204).send();
 })
 
