@@ -15,3 +15,10 @@ model products {
   name  String
   price Decimal
 }
+
+model users {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+}
