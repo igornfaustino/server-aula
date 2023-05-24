@@ -1,6 +1,12 @@
 const express = require("express");
-const { saveUser, findUserByEmail } = require("../database/users");
+const {
+  saveUser,
+  findUserByEmail,
+  findUserById,
+} = require("../database/users");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const auth = require("../middleware/auth");
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
@@ -26,6 +32,34 @@ router.post("/register", async (req, res) => {
       message: "Server error",
     });
   }
+});
+
+router.post("/login", async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = await findUserByEmail(email);
+  if (!user) return res.status(401).send();
+  const isSamePassword = bcrypt.compareSync(password, user.password);
+  if (!isSamePassword) return res.status(401).send();
+  const token = jwt.sign(
+    {
+      userId: user.id,
+      name: user.name,
+    },
+    process.env.SECRET
+  );
+
+  res.json({
+    success: true,
+    token,
+  });
+});
+
+router.get("/profile", auth, async (req, res) => {
+  const user = await findUserById(req.user.userId);
+  res.json({
+    user,
+  });
 });
 
 module.exports = {
