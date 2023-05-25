@@ -8,7 +8,16 @@ const {
   buyProductByUser,
 } = require("../database/products");
 const auth = require("../middleware/auth");
+const z = require("zod");
 const router = express.Router();
+
+const ProductSchema = z.object({
+  name: z.string({
+    required_error: "Name must be required",
+    invalid_type_error: "Name must be a string",
+  }),
+  price: z.number().min(0).default(0),
+});
 
 router.get("/products", auth, async (req, res) => {
   const moreThan = req.query.more_than ? Number(req.query.more_than) : 0;
@@ -27,22 +36,24 @@ router.get("/products/:id", auth, async (req, res) => {
 });
 
 router.post("/products", auth, async (req, res) => {
-  const newProduct = {
-    name: req.body.name,
-    price: req.body.price,
-  };
-  const savedProduct = await saveProduct(newProduct);
-  res.json({
-    product: savedProduct,
-  });
+  try {
+    const newProduct = ProductSchema.parse(req.body);
+    const savedProduct = await saveProduct(newProduct);
+    res.json({
+      product: savedProduct,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError)
+      return res.status(422).json({
+        message: err.errors,
+      });
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
 router.put("/products/:id", auth, async (req, res) => {
   const id = Number(req.params.id);
-  const product = {
-    name: req.body.name,
-    price: req.body.price,
-  };
+  const product = ProductSchema.parse(req.body);
   const updatedProduct = await updateProduct(id, product);
   res.json({
     product: updatedProduct,
