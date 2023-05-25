@@ -62,6 +62,13 @@ router.get("/profile", auth, async (req, res) => {
   });
 });
 
+router.get("/history", auth, async (req, res) => {
+  const user = await findUserById(req.user.userId);
+  res.json({
+    user,
+  });
+});
+
 module.exports = {
   router,
 };

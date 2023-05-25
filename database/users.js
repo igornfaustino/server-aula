@@ -15,6 +15,17 @@ const findUserById = (id) => {
       name: true,
       email: true,
       password: false,
+      BoughtMany: {
+        select: {
+          quantity: true,
+          product: {
+            select: {
+              name: true,
+              price: true,
+            },
+          },
+        },
+      },
     },
     where: {
       id,
@@ -24,7 +35,11 @@ const findUserById = (id) => {
 
 const saveUser = (user) => {
   return prisma.users.create({
-    data: user,
+    data: {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+    },
   });
 };
 
